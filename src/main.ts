@@ -3,7 +3,8 @@ import { renderHoldings } from './tabs/holdings';
 import { renderProjection } from './tabs/projection';
 import { renderRetirement } from './tabs/retirement';
 import { askModal, renderChat } from './tabs/chat';
-import { loadCsv, save, exportSettings, importSettings, DEFAULTS, settings, holdings, accounts, csvSource } from './state';
+import { openSetup } from './tabs/setup';
+import { loadCsv, save, exportSettings, importSettings, isSample, DEFAULTS, settings, holdings, accounts, csvSource } from './state';
 import { ghost } from './chat/store';
 
 type Tab = { id: string; label: string; render: (rerender: () => void) => HTMLElement };
@@ -67,7 +68,17 @@ function render(): void {
   view.classList.toggle('full', current === 'chat');
   document.body.classList.toggle('chat-mode', current === 'chat');
   for (const b of nav.children) b.classList.toggle('active', (b as HTMLElement).dataset.tab === current);
-  source.textContent = `${holdings.length} holdings in ${accounts.length} accounts · ${csvSource === 'bundled' ? 'bundled export' : 'your CSV'}`;
+  source.textContent = sourceText();
+}
+
+// What the plan runs on: the sample, a holdings file (yours or the bundled export) plus any typed accounts, or typed accounts only.
+function sourceText(): string {
+  if (isSample()) return 'Sample data';
+  const typed = accounts.filter((a) => a.entered).length;
+  const n = (k: number, one: string): string => `${k} ${one}${k === 1 ? '' : 's'}`;
+  if (csvSource === 'none') return n(typed, 'account');
+  const file = `${n(holdings.length, 'holding')} from ${csvSource === 'uploaded' ? 'your CSV' : 'the bundled export'}`;
+  return typed ? `${file} + ${n(typed, 'typed account')}` : file;
 }
 
 function switchTo(id: string): void {
@@ -97,6 +108,7 @@ window.addEventListener('keydown', (e) => {
   if (tab && /^[1-5]$/.test(e.key)) switchTo(tab.id);
 });
 
+document.getElementById('setup')!.addEventListener('click', () => openSetup(render));
 // Load CSV and Import are real buttons (reachable by keyboard) that open the hidden file pickers.
 document.getElementById('csv-load')!.addEventListener('click', () => document.getElementById('csv-file')!.click());
 document.getElementById('settings-import')!.addEventListener('click', () => document.getElementById('settings-file')!.click());
@@ -124,7 +136,7 @@ document.getElementById('settings-file')!.addEventListener('change', async (e) =
   render();
 });
 document.getElementById('csv-reset')!.addEventListener('click', () => {
-  if (!confirm('Reset to the bundled holdings file and default inputs? Export settings first if you want to keep them.')) return;
+  if (!confirm(`Reset to ${__SAMPLE_DATA__ ? 'the sample' : 'the bundled export'}? This removes your typed accounts, any loaded CSV and every input. Export settings first if you want to keep them.`)) return;
   loadCsv(null); importSettings(JSON.stringify(DEFAULTS)); render();
 });
 // "ask" on any stat tile: a quick streamed note in a modal, no tab switch.

@@ -25,7 +25,8 @@ export interface Account {
   value: number;
   costBasis: number;
   gain: number;
-  holdings: Holding[];
+  holdings: Holding[];   // empty for an account typed in by hand
+  entered?: string;      // the EnteredAccount id when typed in by hand (src/state.ts), absent when read from a holdings file
 }
 
 export const BUCKET_LABEL: Record<TaxBucket, string> = {

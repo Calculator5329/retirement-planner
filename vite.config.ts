@@ -9,6 +9,8 @@ const holdings = useEnv ? process.env.PLANNER_HOLDINGS : undefined;
 const defaults = useEnv ? process.env.PLANNER_DEFAULTS : undefined;
 
 export default defineConfig({
+  // True when the bundled holdings file is the shipped sample; the header then says so and offers setup.
+  define: { __SAMPLE_DATA__: JSON.stringify(!holdings) },
   resolve: {
     alias: [
       ...(holdings ? [{ find: /^\.\/data\/holdings\.csv/, replacement: resolve(holdings) }] : []),

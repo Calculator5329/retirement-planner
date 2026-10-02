@@ -2,7 +2,7 @@ import { BUCKETS, BUCKET_LABEL, type Holding } from '../holdings';
 import { donut, hbars } from '../chart';
 import { h, stat, table, help } from '../dom';
 import { pct, usd } from '../format';
-import { accounts, holdings } from '../state';
+import { holdings } from '../state';
 
 // Fund-type groups shown as one row each. Known tickers are listed explicitly;
 // the name-based fallbacks catch tickers a newer export might add.
@@ -35,6 +35,11 @@ function classify(x: Holding): Group | null {
 interface Position { key: string; label: string; meta: string; value: number; basis: number; gain: number; accounts: Set<string>; tickers: Set<string>; group: Group | null }
 
 export function renderHoldings(): HTMLElement {
+  // Typed-in accounts have no positions, so with no holdings file there is nothing to break down.
+  if (holdings.length === 0) return h('div', { class: 'tab' }, h('section', { class: 'empty' },
+    h('div', { class: 'empty-title' }, 'No holdings file loaded'),
+    h('div', { class: 'empty-sub' }, 'This tab breaks a combined_holdings export down by position. Accounts you typed in are on the Accounts tab.'),
+    h('button', { class: 'btn', type: 'button', onclick: () => document.getElementById('csv-file')?.click() }, 'Load CSV')));
   const total = holdings.reduce((s, x) => s + x.value, 0);
   const positions = new Map<string, Position>();
   let cash = 0;
@@ -66,7 +71,8 @@ export function renderHoldings(): HTMLElement {
     [...p.accounts].join(', '),
   ]);
 
-  const bucketTotals = BUCKETS.map((b) => accounts.filter((a) => a.bucket === b).reduce((s, a) => s + a.value, 0));
+  // From the holdings, not the accounts, so typed-in accounts stay out and the centre matches the total.
+  const bucketTotals = BUCKETS.map((b) => holdings.filter((x) => x.bucket === b).reduce((s, x) => s + x.value, 0));
   const taxDonut = donut(BUCKETS.map((b, i) => ({ label: BUCKET_LABEL[b], cls: b, value: bucketTotals[i] ?? 0 })), usd(total / 1000, 0) + 'k');
 
   const funds = groupTotal('Market Funds') + groupTotal('International Market Funds') + groupTotal('Other ETFs');

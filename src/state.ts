@@ -1,6 +1,6 @@
 // Persistent user inputs (localStorage) plus the derived data every tab reads.
 
-import { parseHoldings, rollupAccounts, type Account, type Holding } from './holdings';
+import { BUCKETS, parseHoldings, rollupAccounts, type Account, type Holding, type TaxBucket } from './holdings';
 import { REAL_EQUITY } from './data/history';
 import { ANNUITY_KINDS, LADDER_MODES, type AnnuityKind, type Filing, type LadderMode } from './model';
 import bundledCsv from './data/holdings.csv?raw';
@@ -66,6 +66,26 @@ export function setAnnuityShare(r: RetireSettings, pct: number, equityBefore = r
   if (Number.isFinite(pct)) r.equity = Math.max(0, Math.min(equityBefore, 100 - pct));
 }
 
+/**
+ * Kinds of account you can type in by hand. The kind sets the tax bucket, and
+ * its accountType is what isEmployerPlan reads for the employer match and the
+ * rule of 55. cagr is the growth a new account of that kind starts with.
+ */
+export const ACCOUNT_KINDS = {
+  '401k': { name: '401(k)', label: '401(k) / 403(b)', bucket: 'pretax', accountType: '401K', note: 'Through your job, taxed as income when you take it out' },
+  roth401k: { name: 'Roth 401(k)', label: 'Roth 401(k)', bucket: 'roth', accountType: 'Roth 401K', note: 'Through your job, tax free when you take it out' },
+  ira: { name: 'Traditional IRA', label: 'Traditional IRA', bucket: 'pretax', accountType: 'IRA', note: 'Your own, taxed as income when you take it out' },
+  rothIra: { name: 'Roth IRA', label: 'Roth IRA', bucket: 'roth', accountType: 'Roth IRA', note: 'Your own, tax free when you take it out' },
+  brokerage: { name: 'Brokerage', label: 'Brokerage', bucket: 'taxable', accountType: 'Brokerage', note: 'Any time, gains taxed at capital gains rates' },
+  savings: { name: 'Savings', label: 'Savings', bucket: 'taxable', accountType: 'Savings', note: 'Cash, starts at 4% growth', cagr: 4 },
+} as const satisfies Record<string, { name: string; label: string; bucket: TaxBucket; accountType: string; note: string; cagr?: number }>;
+export type AccountKind = keyof typeof ACCOUNT_KINDS;
+/** The kind the setup sheet uses for each bucket's one account. */
+const BUCKET_KIND: Record<TaxBucket, AccountKind> = { pretax: '401k', roth: 'rothIra', taxable: 'brokerage' };
+
+/** An account typed in by hand. basis is what was put in; unset means all of the balance (no gain yet). */
+export interface EnteredAccount { id: string; name: string; kind: AccountKind; balance: number; basis?: number }
+
 export type DrawOrder = 'fill-12' | 'fill-22' | 'taxable-first' | 'pretax-first' | 'roth-first' | 'proportional';
 const DRAW_ORDER_KEYS: DrawOrder[] = ['fill-12', 'fill-22', 'taxable-first', 'pretax-first', 'roth-first', 'proportional'];
 export interface Settings {
@@ -74,7 +94,9 @@ export interface Settings {
   inflation: number;   // percent
   defaultCagr: number; // percent
   showReal: boolean;
-  accounts: Record<string, Partial<AccountSettings>>;
+  accounts: Record<string, Partial<AccountSettings>>; // keyed by account name, for file and typed accounts alike
+  entered: EnteredAccount[];  // accounts typed in by hand, in the order added
+  bundledHoldings: boolean;   // plan over the bundled holdings file; a loaded CSV replaces it either way
   retire: RetireSettings;
 }
 
@@ -89,6 +111,8 @@ const BASE: Settings = {
   defaultCagr: 9,
   showReal: false,
   accounts: {},
+  entered: [],
+  bundledHoldings: true,
   retire: {
     swr: 4, equity: 100, costs: 80000, addlIncome: 0, ssMonthly: 2400, ssStartAge: 67, ssLevel: 'low',
     filing: 'married', stateRate: 0, endAge: 95, drawOrder: 'fill-12', ladder: 'off', ladderAmount: 30000,
@@ -107,7 +131,24 @@ function merge(base: Settings, p: Partial<Settings>): Settings {
   if (typeof out.retire.ladderAmount !== 'number' || !Number.isFinite(out.retire.ladderAmount) || out.retire.ladderAmount < 0) out.retire.ladderAmount = 0;
   if (!(out.retire.annuityKind in ANNUITY_KINDS)) out.retire.annuityKind = 'level';
   if (typeof out.retire.annuity !== 'number' || !Number.isFinite(out.retire.annuity)) out.retire.annuity = 0;
+  out.entered = cleanEntered(out.entered);
+  if (typeof out.bundledHoldings !== 'boolean') out.bundledHoldings = base.bundledHoldings;
   syncSocialSecurity(out.retire);
+  return out;
+}
+
+// Typed accounts from a file or storage: drops anything malformed and any repeated id or name.
+function cleanEntered(raw: unknown): EnteredAccount[] {
+  if (!Array.isArray(raw)) return [];
+  const out: EnteredAccount[] = [];
+  for (const x of raw as Partial<EnteredAccount>[]) {
+    if (typeof x !== 'object' || x === null) continue;
+    const { id, name, kind, balance, basis } = x;
+    if (typeof id !== 'string' || typeof name !== 'string' || !name.trim() || typeof kind !== 'string' || !Object.hasOwn(ACCOUNT_KINDS, kind)) continue;
+    if (typeof balance !== 'number' || !Number.isFinite(balance)) continue;
+    if (out.some((e) => e.id === id || e.name === name)) continue;
+    out.push({ id, name, kind, balance, ...(typeof basis === 'number' && Number.isFinite(basis) ? { basis } : {}) });
+  }
   return out;
 }
 
@@ -149,6 +190,7 @@ export function importSettings(raw: string): boolean {
   if (!next) return false;
   for (const k of Object.keys(settings) as (keyof Settings)[]) delete (settings as unknown as Record<string, unknown>)[k];
   Object.assign(settings, next);
+  refreshAccounts();
   save();
   return true;
 }
@@ -204,7 +246,8 @@ export function inputProblems(s: Settings): string[] {
   if (!within(s.defaultCagr, cagrLo, cagrHi)) out.push(`Default CAGR must be between ${cagrLo}% and ${cagrHi}%.`);
   for (const a of accounts) {
     const x = s.accounts[a.name] ?? {};
-    if (a.value < 0) out.push(`${a.name}: the balance from your holdings file is negative.`);
+    if (a.value < 0) out.push(a.entered ? `${a.name}: balance cannot be negative.` : `${a.name}: the balance from your holdings file is negative.`);
+    if (a.entered && a.costBasis < 0) out.push(`${a.name}: basis cannot be negative.`);
     if (x.contribution !== undefined && !atLeast0(x.contribution)) out.push(`${a.name}: contribution cannot be negative.`);
     if (x.cagr !== undefined && !within(x.cagr, cagrLo, cagrHi)) out.push(`${a.name}: CAGR must be between ${cagrLo}% and ${cagrHi}%.`);
     if (x.salary !== undefined && !atLeast0(x.salary)) out.push(`${a.name}: salary cannot be negative.`);
@@ -216,21 +259,126 @@ export function inputProblems(s: Settings): string[] {
 
 export const yearsToRetire = (): number => Math.max(0, settings.retireAge - settings.currentAge);
 
-// Holdings: bundled CSV unless the user loaded their own.
-let csvText = bundledCsv;
-try { csvText = localStorage.getItem(CSV_KEY) ?? bundledCsv; } catch { /* ignore */ }
+// Holdings: a loaded CSV, else the bundled file unless setup turned it off.
+// Accounts: the holdings rolled up, then the typed ones in the order added.
+let uploadedCsv: string | null = null;
+try { uploadedCsv = localStorage.getItem(CSV_KEY); } catch { /* ignore */ }
 
-export let holdings: Holding[] = parseHoldings(csvText);
-export let accounts: Account[] = rollupAccounts(holdings);
-export let csvSource: 'bundled' | 'uploaded' = csvText === bundledCsv ? 'bundled' : 'uploaded';
+export let holdings: Holding[] = [];
+export let accounts: Account[] = [];
+export let csvSource: 'bundled' | 'uploaded' | 'none' = 'bundled';
 
+/** Rebuild holdings and accounts after the CSV, settings.bundledHoldings or settings.entered change. */
+export function refreshAccounts(): void {
+  csvSource = uploadedCsv !== null ? 'uploaded' : settings.bundledHoldings ? 'bundled' : 'none';
+  holdings = parseHoldings(uploadedCsv ?? (settings.bundledHoldings ? bundledCsv : ''));
+  accounts = [...rollupAccounts(holdings), ...settings.entered.map(enteredAccount)];
+}
+refreshAccounts();
+
+/** True while the plan shows the shipped sample (never in a build pointed at a real export). */
+export const isSample = (): boolean => __SAMPLE_DATA__ && csvSource === 'bundled';
+
+function enteredAccount(e: EnteredAccount): Account {
+  const k = ACCOUNT_KINDS[e.kind];
+  const basis = e.basis ?? e.balance;
+  return { name: e.name, broker: '', accountType: k.accountType, bucket: k.bucket, value: e.balance, costBasis: basis, gain: e.balance - basis, holdings: [], entered: e.id };
+}
+
+/** Stop planning over the bundled holdings file. Typed accounts stay; the file accounts' settings go with them. */
+export function dropBundled(): void {
+  if (csvSource === 'bundled') for (const a of accounts) if (!a.entered) delete settings.accounts[a.name];
+  settings.bundledHoldings = false;
+  refreshAccounts();
+}
+
+/** Load a CSV's text, or null to drop it (back to the bundled file unless setup turned that off). Returns the number of holdings read. */
 export function loadCsv(text: string | null): number {
-  csvText = text ?? bundledCsv;
-  csvSource = text === null ? 'bundled' : 'uploaded';
+  uploadedCsv = text;
   try {
     if (text === null) localStorage.removeItem(CSV_KEY); else localStorage.setItem(CSV_KEY, text);
   } catch { /* ignore */ }
-  holdings = parseHoldings(csvText);
-  accounts = rollupAccounts(holdings);
+  refreshAccounts();
   return holdings.length;
+}
+
+/** `base`, or `base 2`, `base 3`... whichever no other account uses. */
+function uniqueName(base: string, except?: string): string {
+  const taken = (n: string): boolean => accounts.some((a) => a.name === n && (except === undefined || a.entered !== except));
+  if (!taken(base)) return base;
+  for (let i = 2; ; i++) if (!taken(`${base} ${i}`)) return `${base} ${i}`;
+}
+
+/** Add a typed account of `kind` with a zero balance; returns it. */
+export function addAccount(kind: AccountKind): EnteredAccount {
+  const k: { name: string; cagr?: number } = ACCOUNT_KINDS[kind];
+  const id = `e${Math.max(0, ...settings.entered.map((e) => Number(e.id.slice(1)) || 0)) + 1}`;
+  const e: EnteredAccount = { id, name: uniqueName(k.name), kind, balance: 0 };
+  settings.entered.push(e);
+  if (k.cagr !== undefined) settings.accounts[e.name] = { cagr: k.cagr };
+  refreshAccounts();
+  return e;
+}
+
+export function updateAccount(id: string, patch: Partial<Pick<EnteredAccount, 'kind' | 'balance' | 'basis'>>): void {
+  const e = settings.entered.find((x) => x.id === id);
+  if (!e) return;
+  Object.assign(e, patch);
+  refreshAccounts();
+}
+
+/** Rename a typed account, carrying its per-account settings over. A blank name keeps the old one; a taken one gets a number. */
+export function renameAccount(id: string, name: string): void {
+  const e = settings.entered.find((x) => x.id === id);
+  const next = name.trim();
+  if (!e || !next || next === e.name) return;
+  const final = uniqueName(next, id);
+  const s = settings.accounts[e.name];
+  delete settings.accounts[e.name];
+  if (s) settings.accounts[final] = s;
+  e.name = final;
+  refreshAccounts();
+}
+
+export function removeAccount(id: string): void {
+  const e = settings.entered.find((x) => x.id === id);
+  if (!e) return;
+  settings.entered = settings.entered.filter((x) => x !== e);
+  delete settings.accounts[e.name];
+  refreshAccounts();
+}
+
+/** The setup sheet's answers. Money is today's dollars; saved and adding are per tax bucket. */
+export interface SetupAnswers {
+  currentAge: number;
+  retireAge: number;
+  filing: Filing;
+  saved: Record<TaxBucket, number>;
+  adding: Record<TaxBucket, number>;  // per year
+  spendingMonthly: number;
+  fixedMonthly: number;
+  fixedEndAge: number;
+  ssLevel: Exclude<SsLevel, 'custom'>;
+}
+
+/**
+ * Replace the plan with the setup sheet's answers: one typed account per tax
+ * bucket that holds or receives money, no holdings file, every other input
+ * back to its default.
+ */
+export function applySetup(a: SetupAnswers): void {
+  const entered: EnteredAccount[] = [];
+  const perAccount: Settings['accounts'] = {};
+  for (const b of BUCKETS) {
+    if (a.saved[b] <= 0 && a.adding[b] <= 0) continue;
+    const kind = BUCKET_KIND[b];
+    const name = ACCOUNT_KINDS[kind].name;
+    entered.push({ id: `e${entered.length + 1}`, name, kind, balance: a.saved[b] });
+    perAccount[name] = { contribution: a.adding[b] };
+  }
+  loadCsv(null);
+  importSettings(JSON.stringify({
+    ...DEFAULTS, currentAge: a.currentAge, retireAge: a.retireAge, accounts: perAccount, entered, bundledHoldings: false,
+    retire: { ...DEFAULTS.retire, filing: a.filing, costs: a.spendingMonthly * 12, fixedMonthly: a.fixedMonthly, fixedEndAge: a.fixedEndAge, ssLevel: a.ssLevel },
+  }));
 }

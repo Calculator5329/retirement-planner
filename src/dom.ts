@@ -27,9 +27,14 @@ export interface NumberFieldOpts {
 
 /** A number input. A cleared or half-typed field saves nothing, and leaving it empty puts the last saved value back. */
 export function numberField(o: NumberFieldOpts): HTMLElement {
+  return h('label', { class: 'field' }, h('span', { class: 'field-label' }, o.label), numberInput(o));
+}
+
+/** numberField without the visible label (a table cell, where the column says what it is); `label` becomes the aria-label. */
+export function numberInput(o: NumberFieldOpts): HTMLElement {
   let last = o.value;
   const input = h('input', {
-    type: 'number', value: o.value, step: o.step ?? 1, 'data-key': o.key,
+    type: 'number', value: o.value, step: o.step ?? 1, 'data-key': o.key, 'aria-label': o.label,
     ...(o.min !== undefined ? { min: o.min } : {}),
     oninput: () => {
       if (input.value.trim() === '') return;   // Number('') is 0, and a lone "-" also reads as ''
@@ -38,9 +43,7 @@ export function numberField(o: NumberFieldOpts): HTMLElement {
     },
     onblur: () => { if (input.value.trim() === '') input.value = String(last); },
   }) as HTMLInputElement;
-  return h('label', { class: 'field' },
-    h('span', { class: 'field-label' }, o.label),
-    h('span', { class: 'field-input' }, input, h('span', { class: 'suffix' }, o.suffix ?? '')));
+  return h('span', { class: 'field-input' }, input, h('span', { class: 'suffix' }, o.suffix ?? ''));
 }
 
 export function selectField<T extends string>(key: string, label: string, value: T,

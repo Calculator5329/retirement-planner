@@ -151,22 +151,57 @@ th.wrap { text-align: left; }
 .tip-val { margin-left: auto; color: var(--text); padding-left: 12px; font-variant-numeric: tabular-nums; }
 .tip-sub { color: var(--text-3); margin-top: 4px; font-size: 11px; }
 
-/* Account cards */
-.cards { display: flex; flex-wrap: wrap; gap: 12px; }
-.card { flex: 1 1 280px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.card-head { display: flex; align-items: baseline; gap: 8px; }
-.card-name { font-weight: 600; }
-.card-meta { color: var(--text-3); font-size: 11px; margin-left: auto; }
-.card-value { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
-.card-gain { font-size: 12px; margin-left: 8px; }
-.card-inputs { display: flex; gap: 12px; }
-.card-inputs .field { flex: 1; }
-.card-inputs input[type=number] { width: 100%; }
-.card-match { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
-.card-line { display: flex; justify-content: space-between; align-items: baseline; color: var(--text-2); }
-.card-line strong { color: var(--text); font-variant-numeric: tabular-nums; }
-.card-foot { display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 10px; color: var(--text-2); }
-.card-foot strong { color: var(--text); font-variant-numeric: tabular-nums; }
+/* Account list: one grid row per account, an optional detail line under it (match, basis), add chips at the foot. */
+.acct-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.acct-row { display: grid; grid-template-columns: minmax(200px, 1fr) 170px 150px 150px 100px 130px 150px; align-items: center; gap: 16px; padding: 8px 14px; }
+.acct-item { border-top: 1px solid var(--border); }
+.acct-head { color: var(--text-3); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; padding-top: 10px; }
+.acct-head .pad { padding-right: 20px; }
+.acct-row .num { text-align: right; }
+.acct-row .field-input { justify-content: flex-end; }
+.acct-row .suffix { display: inline-block; width: 14px; font-size: 12px; }
+.acct-row input[type=number] { flex: 1; min-width: 0; width: auto; }
+.acct-row select { width: 100%; }
+.acct-row .acct-name { font-weight: 500; min-width: 0; }
+.acct-name-text { display: flex; flex-direction: column; min-width: 0; }
+.acct-name-text .muted { font-size: 11px; }
+.acct-name-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 5px 8px; border-radius: var(--radius); font: inherit; font-weight: 500; }
+.acct-name-input:hover, .acct-row select:hover, .acct-row input[type=number]:hover, .acct-detail input[type=number]:hover { border-color: var(--text-3); }
+.acct-name-input:focus { outline: none; border-color: var(--accent); }
+.acct-type { color: var(--text-2); }
+.acct-fixed { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.acct-end { font-weight: 500; font-variant-numeric: tabular-nums; }
+.acct-actions { display: grid; grid-template-columns: 1fr 24px; align-items: center; justify-items: end; gap: 6px; }
+.acct-actions .btn { grid-column: 1; white-space: nowrap; }
+.btn.on { border-color: var(--accent); }
+.acct-x { grid-column: 2; background: none; border: 0; color: var(--text-3); font: inherit; font-size: 18px; line-height: 1; width: 24px; height: 24px; border-radius: var(--radius); cursor: pointer; }
+.acct-x:hover { color: var(--neg); background: var(--surface-2); }
+.acct-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px; padding: 2px 14px 12px 36px; }
+.acct-detail[hidden] { display: none; }
+.acct-detail-group { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.acct-detail-title { display: inline-flex; align-items: center; color: var(--text-2); }
+.acct-detail .field { flex-direction: row; align-items: center; gap: 8px; }
+.acct-detail .field-label { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text-2); }
+.acct-detail input[type=number] { width: 104px; }
+.acct-detail .suffix { display: inline-block; width: 14px; font-size: 12px; }
+.acct-detail-sum { font-weight: 500; font-variant-numeric: tabular-nums; }
+.acct-add { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); }
+.acct-add-label { color: var(--text-3); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 4px; }
+.first-account { padding: 40px 0; }
+.acct-kinds { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 6px 0; }
+/* Under 1000px the row folds into labelled pairs: name on top, then type and balance, adding and growth, value and actions. */
+@media (max-width: 1000px) {
+  .acct-head { display: none; }
+  .acct-row { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "name name" "type bal" "add growth" "end actions"; gap: 10px 16px; padding: 12px 14px; }
+  .acct-row > :nth-child(1) { grid-area: name; } .acct-row > :nth-child(2) { grid-area: type; } .acct-row > :nth-child(3) { grid-area: bal; }
+  .acct-row > :nth-child(4) { grid-area: add; } .acct-row > :nth-child(5) { grid-area: growth; } .acct-row > :nth-child(6) { grid-area: end; }
+  .acct-row > :nth-child(7) { grid-area: actions; }
+  .acct-row [data-label]::before { content: attr(data-label); display: block; margin-bottom: 4px; color: var(--text-3); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; text-align: left; }
+  .acct-row .num { text-align: left; }
+  .acct-row .field-input { justify-content: flex-start; }
+  .acct-detail { padding-left: 14px; }
+}
+
 .two-col { display: flex; flex-wrap: wrap; gap: 24px; }
 .two-col > * { flex: 1 1 380px; min-width: 0; }
 .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
@@ -320,6 +355,22 @@ body.chat-mode #app { height: 100%; display: flex; flex-direction: column; paddi
 .ask-q { flex: 1; color: var(--text-2); font-size: 13px; }
 .ask-close { background: none; border: 0; color: var(--text-3); font-size: 22px; line-height: 1; cursor: pointer; padding: 0 2px; }
 .ask-close:hover { color: var(--text); }
+
+/* Setup sheet: four short steps in the ask-modal overlay. No overflow on the panel, or the invisible tips below the seg buttons would make it scroll. */
+.setup-panel { width: min(520px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; box-shadow: 0 24px 64px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 18px; }
+.setup-title { flex: 1; display: flex; align-items: center; font-size: 16px; font-weight: 600; }
+.setup-body { display: flex; flex-direction: column; gap: 14px; }
+.setup-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; }
+.setup-label { display: flex; flex-direction: column; gap: 2px; }
+.setup-note { color: var(--text-3); font-size: 12px; }
+.setup-row input[type=number] { width: 140px; }
+.setup-row input[type=number]:hover { border-color: var(--text-3); }
+.setup-suffix { display: inline-block; width: 40px; font-size: 12px; }
+.setup-error { color: var(--warn); }
+.setup-error:empty { display: none; }
+.setup-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; border-top: 1px solid var(--border); }
+.setup-btns { display: flex; gap: 8px; }
+@media (max-width: 520px) { .setup-row { grid-template-columns: 1fr; gap: 6px; } }
 
 .btn.primary { background: var(--s1); border-color: var(--s1); color: #fff; }
 .btn.small { padding: 3px 8px; font-size: 12px; }

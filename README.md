@@ -1,8 +1,8 @@
 # Retirement Planner
 
-A browser app that reads a brokerage holdings export and asks one question: can this plan retire at the age I picked. It replays the plan from every start year since 1928, using that stretch's actual S&P 500 and 10-year Treasury returns and inflation, and a chat tab lets a language model answer "what if" questions by calling the planner's own functions instead of doing math itself.
+A browser app that takes your accounts, typed in or read from a brokerage holdings export, and asks one question: can this plan retire at the age I picked. It replays the plan from every start year since 1928, using that stretch's actual S&P 500 and 10-year Treasury returns and inflation, and a chat tab lets a language model answer "what if" questions by calling the planner's own functions instead of doing math itself.
 
-Try it on the sample data at https://retirement-planner-5329.web.app. It is a static page: a CSV you load and the inputs you change stay in your browser's localStorage, and only the Chat tab sends anything out, to OpenRouter with your own key.
+Try it at https://retirement-planner-5329.web.app. It opens on sample data; **Set up** in the header asks four questions (ages, savings, yearly additions, spending) and replaces the sample with your numbers. It is a static page: the accounts you type, a CSV you load and the inputs you change stay in your browser's localStorage, and only the Chat tab sends anything out, to OpenRouter with your own key.
 
 ![Accounts tab on the sample data](docs/img/accounts.png)
 ![Retirement tab on the sample data](docs/img/retirement.png)
@@ -26,13 +26,13 @@ To plan over a real export, put it in `private/` (gitignored) and point the buil
 PLANNER_HOLDINGS=private/holdings.csv PLANNER_DEFAULTS=private/defaults.json npm run dev
 ```
 
-Both variables are optional and independent. They are read in `vite.config.ts` and ignored under vitest, so the tests always run on the sample. The Load CSV button in the header also swaps holdings at runtime; that copy stays in the browser's localStorage.
+Both variables are optional and independent. They are read in `vite.config.ts` and ignored under vitest, so the tests always run on the sample. The Load CSV button in the header also swaps holdings at runtime; that copy stays in the browser's localStorage. Accounts typed in on the Accounts tab sit alongside the file's, and Clear sample drops the bundled holdings.
 
 The CSV format is a 10-column export: ticker, name, shares, current value, cost basis, unrealized gain, account, broker, account type (401K, 403B, Roth, Normal Brokerage) and tax treatment (Pre-Tax, Post-Tax, Normal). The header only names the first eight.
 
 ## What it does
 
-- **Accounts**: a card per account with its contribution, growth rate and employer match, and tax-bucket donuts today and at retirement.
+- **Accounts**: an editable list of accounts. Add one by type (401(k), Roth 401(k), traditional or Roth IRA, brokerage, savings) and type its balance, or read them from a holdings file. Each row has its yearly contribution, growth rate and value at retirement, with employer match and cost basis behind a toggle, and tax-bucket donuts today and at retirement.
 - **Retirement**: the success rate across every historical start year, a fan chart of balances, where each year's spending comes from, and a grid of success by spending and retirement age. The inputs:
   - variable expenses that keep up with inflation, and fixed expenses like a mortgage that stay the same in dollars until a payoff age
   - an allocation at retirement across the S&P 500, 10-year Treasuries and a life annuity, with a table comparing allocations

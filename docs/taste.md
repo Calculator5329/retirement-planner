@@ -21,7 +21,7 @@ concrete settings for this repo.
 ## Layout
 
 - **No orphan rows.** Four things are 4 across or 2x2, never 3+1. Stat tiles
-  and account cards `flex-grow` so the last row fills. `.controls` uses
+  `flex-grow` so the last row fills. `.controls` uses
   `minmax(420px, 1fr)` so four groups go 2x2 at 1240px; a 300px minimum let
   them land 3+1 at my width. Single column under 900px.
 - **Notes are tooltips.** Explanations go in `help()` "?" hovers on the group

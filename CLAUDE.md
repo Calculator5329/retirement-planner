@@ -8,13 +8,19 @@ from the UI). Both shipped files are synthetic and must stay synthetic: real
 exports live in the gitignored `private/` folder and load with
 `PLANNER_HOLDINGS=private/holdings.csv PLANNER_DEFAULTS=private/defaults.json
 npm run dev` (aliases in `vite.config.ts`, ignored under vitest). Load CSV in
-the UI swaps holdings at runtime. Never commit real balances, account names or
+the UI swaps holdings at runtime. Typed accounts are `settings.entered`
+(`EnteredAccount`, kinds in `ACCOUNT_KINDS` in `src/state.ts`) and join the
+file's accounts in `refreshAccounts`; `bundledHoldings: false` drops the
+bundled CSV. The header's Set up opens `openSetup` (`src/tabs/setup.ts`), four
+questions that `applySetup` turns into one typed account per tax bucket. Never commit real balances, account names or
 fractional share counts. Publishing goes only through
 `scripts/publish-copy.sh`; read `docs/publish.md` first (neither is in the
 published copy).
 
-Tabs: Accounts (account cards with contribution + CAGR, donuts by tax bucket,
-value at retirement), Retirement (ficalc-style historical-sequence simulation:
+Tabs: Accounts (an editable account list: rows read from the holdings file
+plus accounts typed in by hand, each with contribution, CAGR and value at
+retirement, match and basis behind a row toggle; donuts by tax bucket),
+Retirement (ficalc-style historical-sequence simulation:
 the plan is replayed from every S&P 500 start year in `src/data/history.ts`,
 giving a success rate, fan chart, income-source bars, federal tax with 2025
 brackets, social security, an allocation at retirement across the S&P 500,
@@ -50,7 +56,7 @@ the model from writing them. Social security is `SS_LEVELS` + `ssMonthlyFor` in
 level is custom. `help()` tooltips take markdown.
 
 Rules (the reasons and the concrete settings are in `docs/taste.md`, read it
-before any UI change): dark theme, no gradients/glassmorphism; stat tiles and cards flex-grow
+before any UI change): dark theme, no gradients/glassmorphism; stat tiles flex-grow
 so a row never ends with a single orphan; explanatory notes go in `help()` tooltips, never footnotes; all retirement-tab math is in
 today's dollars (brackets applied unindexed); user inputs persist to
 localStorage under `retirement-planner-v3` and round-trip through the header's
