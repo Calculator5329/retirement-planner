@@ -275,7 +275,7 @@ export function donut(slices: Slice[], centre: string, centreSub?: string): HTML
     a0 = a1;
   }
   root.append(text(C, C - 2, centre, 'middle', 'donut-centre'));
-  if (centreSub) root.append(text(C, C + 14, centreSub, 'middle', 'axis'));
+  if (centreSub) root.append(text(C, C + 16, centreSub, 'middle', 'donut-sub'));
   const list = h('div', { class: 'donut-legend' }, ...slices.filter((s) => s.value > 0).map((s) =>
     h('div', { class: 'donut-row' }, h('span', { class: `dot ${s.cls}` }), h('span', { class: 'donut-label' }, s.label, s.sub ? h('span', { class: 'muted' }, ` ${s.sub}`) : null),
       h('span', { class: 'donut-val' }, usd(s.value)), h('span', { class: 'donut-pct' }, `${((s.value / total) * 100).toFixed(1)}%`))));

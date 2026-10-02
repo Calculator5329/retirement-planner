@@ -189,6 +189,7 @@ th.wrap { text-align: left; }
 .donut { width: 140px; height: 140px; flex: none; }
 .slice { stroke: var(--surface); stroke-width: 2; }
 .donut-centre { fill: var(--text); font-size: 15px; font-weight: 600; }
+.donut-sub { fill: var(--text-2); font-size: 12px; }
 .donut-legend { width: 100%; display: grid; grid-template-columns: auto 1fr auto auto; column-gap: 10px; row-gap: 6px; align-items: center; }
 .donut-row { display: contents; font-variant-numeric: tabular-nums; }
 .donut-label { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
