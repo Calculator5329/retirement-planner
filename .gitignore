@@ -3,3 +3,4 @@ dist
 .orc/
 private/
 __pycache__/
+.firebase/

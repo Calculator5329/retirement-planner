@@ -2,6 +2,8 @@
 
 A browser app that reads a brokerage holdings export and asks one question: can this plan retire at the age I picked. It replays the plan from every start year since 1928, using that stretch's actual S&P 500 and 10-year Treasury returns and inflation, and a chat tab lets a language model answer "what if" questions by calling the planner's own functions instead of doing math itself.
 
+Try it on the sample data at https://retirement-planner-5329.web.app. It is a static page: a CSV you load and the inputs you change stay in your browser's localStorage, and only the Chat tab sends anything out, to OpenRouter with your own key.
+
 ![Accounts tab on the sample data](docs/img/accounts.png)
 ![Retirement tab on the sample data](docs/img/retirement.png)
 
