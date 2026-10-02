@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retirement Planner</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="top">
+      <h1>Retirement Planner</h1>
+      <nav id="tabs"></nav>
+      <div id="top-right">
+        <span id="source"></span>
+        <span class="group-btns">
+          <button type="button" id="csv-load" class="btn" title="Load a newer combined_holdings export">Load CSV</button>
+          <input type="file" id="csv-file" accept=".csv" hidden />
+          <button id="settings-export" class="btn" title="Download every input as a JSON settings file">Export</button>
+          <button type="button" id="settings-import" class="btn" title="Restore inputs from an exported settings file">Import</button>
+          <input type="file" id="settings-file" accept=".json,application/json" hidden />
+          <button id="csv-reset" class="btn danger" title="Back to the bundled holdings file and default inputs">Reset</button>
+        </span>
+      </div>
+    </header>
+    <main id="view"></main>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

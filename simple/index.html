@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="One question, four sliders: the earliest age your savings would have lasted through almost every stretch of market history since 1928." />
+  <meta name="color-scheme" content="light" />
+  <title>When can I stop working?</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="ask" aria-labelledby="question">
+      <h1 id="question" class="question">When can I stop working?</h1>
+      <p class="answer" aria-live="polite" aria-atomic="true">
+        <span class="big" id="big">&nbsp;</span>
+        <span class="line" id="line">&nbsp;</span>
+      </p>
+    </section>
+
+    <form class="inputs" id="inputs" aria-label="Your numbers" onsubmit="return false">
+      <div class="field">
+        <label for="age">Your age</label>
+        <output for="age" id="age-out"></output>
+        <input type="range" id="age" name="age" min="20" max="70" step="1" />
+      </div>
+      <div class="field">
+        <label for="saved">Saved for retirement so far</label>
+        <output for="saved" id="saved-out"></output>
+        <input type="range" id="saved" name="saved" min="0" max="2000000" step="5000" />
+      </div>
+      <div class="field">
+        <label for="savingPerMonth">Put away each month</label>
+        <output for="savingPerMonth" id="savingPerMonth-out"></output>
+        <input type="range" id="savingPerMonth" name="savingPerMonth" min="0" max="8000" step="50" />
+      </div>
+      <div class="field">
+        <label for="spendingPerMonth">Spend each month once you stop</label>
+        <output for="spendingPerMonth" id="spendingPerMonth-out"></output>
+        <input type="range" id="spendingPerMonth" name="spendingPerMonth" min="1000" max="15000" step="100" />
+      </div>
+    </form>
+
+    <details class="how" id="how">
+      <summary>How this is worked out</summary>
+      <div class="how-body">
+        <p>Your savings grow until you stop, by <span data-a="growth"></span> a year above inflation, plus what you put away each month.</p>
+        <p>From the age you stop, each year takes out what you spend plus the tax on it, and Social Security starts paying at <span data-a="ssAge"></span>.</p>
+        <p>That plan is replayed against real market history, once starting in each year from <span data-a="firstYear"></span>. The answer is the first age at which your money lasts until <span data-a="lastAge"></span> in at least <span data-a="pass"></span> of those runs.</p>
+
+        <h2>What it assumes</h2>
+        <dl class="assumptions">
+          <div><dt>Investments</dt><dd><span data-a="stocks"></span> stocks, <span data-a="bonds"></span> bonds</dd></div>
+          <div><dt>Stock returns</dt><dd>S&amp;P 500 with dividends, each year <span data-a="years"></span>, after inflation</dd></div>
+          <div><dt>Bond returns</dt><dd><span data-a="bondReal"></span> a year above inflation</dd></div>
+          <div><dt>Growth while saving</dt><dd><span data-a="growth"></span> a year above inflation (the average for this mix since <span data-a="firstYear"></span>)</dd></div>
+          <div><dt>Social Security</dt><dd><span data-a="ss"></span> a month from <span data-a="ssAge"></span> (the 2025 average for one person)</dd></div>
+          <div><dt>Taxes</dt><dd>2025 federal rates for one person, no state tax. Savings sit in a 401(k)-style account, so every dollar taken out is taxed as income.</dd></div>
+          <div><dt>Taking money out early</dt><dd>10% extra before age 59&frac12;, unless you stop at 55 or later</dd></div>
+          <div><dt>Money must last until</dt><dd>Age <span data-a="lastAge"></span></dd></div>
+          <div><dt>Good enough means</dt><dd><span data-a="pass"></span> past markets</dd></div>
+          <div><dt>Dollars</dt><dd>Everything is in today's money</dd></div>
+        </dl>
+
+        <h2 id="chart-title">Money left if you stop at <span id="chart-age"></span></h2>
+        <div class="chart" id="chart"></div>
+        <p class="readout" id="readout" aria-live="polite"></p>
+        <div class="sr-only"><table id="chart-table" aria-labelledby="chart-title"></table></div>
+
+        <p class="note">A sketch, not advice. The full planner splits savings by account and tax type and lets you change every assumption above.</p>
+      </div>
+    </details>
+  </main>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

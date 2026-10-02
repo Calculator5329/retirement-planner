@@ -1,0 +1,15 @@
+ticker,name,shares,current_value,cost_basis,unrealized_gain,account,broker,,
+,,,,,,,,,
+VTI,VANGUARD TOTAL STOCK MARKET ETF,600,150000,100000,50000,Sample 401(k),Example Brokerage,401K,Pre-Tax
+VXUS,VANGUARD TOTAL INTL STOCK ETF,1000,60000,50000,10000,Sample 401(k),Example Brokerage,401K,Pre-Tax
+BND,VANGUARD TOTAL BOND MARKET ETF,500,35000,35000,0,Sample 401(k),Example Brokerage,401K,Pre-Tax
+,,,,,,,,,
+VOO,VANGUARD S&P 500 ETF,100,50000,30000,20000,Roth IRA,Example Brokerage,Roth,Post-Tax
+QQQ,INVESCO QQQ TRUST,50,25000,15000,10000,Roth IRA,Example Brokerage,Roth,Post-Tax
+SPAXX,HELD IN MONEY MARKET,,5000,,,Roth IRA,Example Brokerage,Roth,Post-Tax
+,,,,,,,,,
+VTI,VANGUARD TOTAL STOCK MARKET ETF,200,50000,40000,10000,Taxable Brokerage,Example Brokerage,Normal Brokerage,Normal
+SCHB,SCHWAB US BROAD MARKET ETF,1000,25000,20000,5000,Taxable Brokerage,Example Brokerage,Normal Brokerage,Normal
+MSFT,MICROSOFT CORP,50,20000,10000,10000,Taxable Brokerage,Example Brokerage,Normal Brokerage,Normal
+AAPL,APPLE INC,100,20000,12000,8000,Taxable Brokerage,Example Brokerage,Normal Brokerage,Normal
+SPAXX,HELD IN MONEY MARKET,,10000,,,Taxable Brokerage,Example Brokerage,Normal Brokerage,Normal

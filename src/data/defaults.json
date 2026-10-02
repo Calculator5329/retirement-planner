@@ -1,0 +1,36 @@
+{
+  "app": "retirement-planner",
+  "exported": "2026-09-24",
+  "currentAge": 40,
+  "retireAge": 60,
+  "inflation": 3,
+  "defaultCagr": 8,
+  "showReal": false,
+  "accounts": {
+    "Sample 401(k)": {
+      "contribution": 20000,
+      "salary": 0,
+      "matchPct": 0,
+      "matchUpToPct": 0
+    },
+    "Roth IRA": {
+      "contribution": 7000
+    },
+    "Taxable Brokerage": {
+      "contribution": 5000,
+      "cagr": 7
+    }
+  },
+  "retire": {
+    "swr": 4,
+    "equity": 80,
+    "costs": 72000,
+    "addlIncome": 0,
+    "ssMonthly": 4000,
+    "ssStartAge": 67,
+    "filing": "married",
+    "stateRate": 5,
+    "endAge": 95,
+    "ssLevel": "average"
+  }
+}
