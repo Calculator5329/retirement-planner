@@ -55,7 +55,7 @@ export function renderAccounts(rerender: () => void): HTMLElement {
   const visuals = h('section', { class: 'two-col' },
     h('div', { class: 'panel' }, h('h3', {}, 'Tax buckets today'), donut(byBucket, usd(totalNow / 1000, 0) + 'k')),
     h('div', { class: 'panel' }, h('h3', {}, `Tax buckets at ${settings.retireAge}`), donut(endByBucket, usd(display(totalEnd) / 1000, 0) + 'k', unit)),
-    h('div', { class: 'panel' }, h('h3', {}, 'Accounts by value'), hbars(accounts.map((a) => ({ label: a.name, sub: a.broker || a.accountType, value: a.value, cls: a.bucket })))),
+    h('div', { class: 'panel' }, h('h3', {}, 'Accounts by value'), hbars(accounts.map((a) => ({ label: a.name, sub: a.broker, value: a.value, cls: a.bucket })))),
   );
 
   return h('div', { class: 'tab' }, list, controls, stats, visuals);
